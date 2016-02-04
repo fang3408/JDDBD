@@ -10,7 +10,7 @@ var code = "<div id='qp_div'>"
         + "递增金额<input type='text' id='qp_inc_amount' />&nbsp;&nbsp;&nbsp;&nbsp;"
         + "<input type='button' value='后台抢拍' id='qp_btn_begin' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
         + "<input type='button' value='手动抢拍' id='qp_btn_manual' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
-        + "【抢拍间隔两秒】<span id='say' style='color:red;'></span>"
+        + "<input type='button' value='剩余时间' id='qp_btn_remain' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
         + "</div>";
 $('body').prepend(code);
 
@@ -30,6 +30,11 @@ $('#qp_btn_manual').on('click', function() {
     queryPriceCurrent(num, false);
 });
 
+$('#qp_btn_remain').on('click', function() {
+    queryCurRemainTime(num, function () {
+    });
+});
+
 function queryNum() {
     var addr = window.location.href;
     var ind = addr.lastIndexOf('/');
@@ -41,69 +46,123 @@ function queryNum() {
 function queryPriceSale(){
     var price = $('.product_intro > .intro_detail .auction_intro del').html()
     if (price== undefined || price == '') {
-        price = $('.product_intro > .intro_detail .auction_intro #auction1dangqianjia').html()
-        if (price == undefined || price == '') {
             console.info("获取商品商城售价失败!");
             return;
-        }
     };
     console.info("商品售价为:"+price);
     price = price.substring(1)
     return price
 }
 
-function queryPriceCurrent(num, auto) {
+function queryCurRemainTime (num, Fun) {
     var host = "http://paimai.jd.com"
     var currentInterface = host + "/services/currentList.action?paimaiIds="+num+"&callback=showData&t=1432893946478&callback=jQuery8717195&_=1432893946480"
-    $.get(currentInterface, function(data) {
+    $.get(currentInterface, function (data) {
         var start = data.indexOf('[')
-        var end = data.lastIndexOf(']') + 1
+        var end   = data.lastIndexOf(']') + 1
         data = data.substring(start, end)
 
         var objs = $.parseJSON(data)
         var priceCurrent = objs[0].currentPrice
-        console.info("商品当前报价："+priceCurrent)
+        var startTime    = objs[0].startTime
+        var endTime      = objs[0].endTime
+        var remainTime   = objs[0].remainTime
+
+        var time = configIntTime(remainTime);
+        console.info("开始时间: "+Date(startTime)+"结束时间: "+Date(endTime))
+        if (time.minute > 0) {
+            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.minute+"分:"+time.second+"秒")
+        }else{
+            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.second+"秒")
+        };
+
+        var productInfo = {};
+        productInfo.priceCurrent = priceCurrent;
+        productInfo.minute       = time.minute;
+        productInfo.second       = time.second;
+        Fun(productInfo);
+    });
+}
+
+function configIntTime (intTime) {
+        var totalSecond = Math.floor(intTime / 1000) 
+        var minute = Math.floor(totalSecond / 60) 
+        var second = Math.floor(totalSecond % 60) 
+        var time = {};
+        time.minute = minute;
+        time.second = second;
+        return time;
+}
+
+function queryPriceCurrent(num, auto) {
+    queryCurRemainTime(num, function (productInfo){
+        var priceCurrent = productInfo.priceCurrent; //当前报价
         // 拍卖报价
         var increaseAmount = $('#qp_inc_amount').val()
         if (increaseAmount == null || increaseAmount == '' || increaseAmount == undefined) {
             increaseAmount = 1;
+        };        
+
+        var max = $('#qp_max_price').val()
+        if (max == null || max == '') {
+            clearTimeout(timer);
+            console.info("请输入最高出价!");
+            return;
         };
-        bid(num, (priceCurrent * 1 + increaseAmount * 1.00), auto)
-    });
+        var money = priceCurrent * 1 + increaseAmount * 1.00
+        console.info("准备出价: "+money+"     "+"最大出价: "+max)
+
+        if (priceCurrent*1.00 > max*1.00){
+            console.info("当前价：" + priceCurrent +", 已超出你的报价最大值" + max)
+            return;
+        };
+
+        if (auto) {
+            if (productInfo.minute > 0) {
+                console.info("时间还太早了哦!")
+                clearTimeout(timer);
+                timer = setTimeout("queryPriceCurrent(num, true)",20000);
+                return;
+            }else{
+                if (productInfo.second > 10) {
+                    clearTimeout(timer);
+                    timer = setTimeout("queryPriceCurrent(num, true)",5000);
+                    return;
+                }else{
+                    if (productInfo.second < 1) {
+                        bid(num, money)
+                        return;
+                    };
+                    clearTimeout(timer);
+                    timer = setTimeout("queryPriceCurrent(num, true)",500);
+                    return;
+                };
+            };
+
+        }else{
+            bid(num, money)
+        };
+        
+    });   
 }
 
-function bid(paimaiId, price, auto) {
-    var max = $('#qp_max_price').val()
-    if (max == null || max == '') {
-        clearTimeout(timer);
-        console.info("请输入最高出价!");
-        return;
-    };
-    console.info("priceCurrent * 1 + increaseAmount="+price)
-    if (price*1.00 < max*1.00) {
-        var url = "/services/bid.action?t=" + getRamdomNumber();
-        var data = {paimaiId:paimaiId,price:price,proxyFlag:0,bidSource:0};
-        jQuery.getJSON(url,data,function(jqXHR){
-            if(jqXHR!=undefined){
-                if(jqXHR.result=='200'){
-                    console.info("恭喜您，出价成功:" + price);
-                }else if(jqXHR.result=='login'){
-                    window.location.href='http://passport.jd.com/new/login.aspx?ReturnUrl='+window.location.href;
-                }else{
-                    // {"message":"同一用户连续出价","result":525}
-                    // {"message":"拍卖出价频率过快","result":517}
-                    console.info("很抱歉，出价失败" + jqXHR.message);
-                };
-                if (auto && jqXHR.result == '525') {
-                    timer = setTimeout("queryPriceCurrent(num, true)",1900);
-                }else{
-                    timer = setTimeout("queryPriceCurrent(num, true)",2000);
-                };
-            }
-        });
-    } else {
-        console.info("当前价：" + price +", 已超出你的报价最大值" + max)
-    }
+function bid(paimaiId, price) {
+    
+    var url = "/services/bid.action?t=" + getRamdomNumber();
+    var data = {paimaiId:paimaiId,price:price,proxyFlag:0,bidSource:0};
+    jQuery.getJSON(url,data,function(jqXHR){
+        if(jqXHR!=undefined){
+            if(jqXHR.result=='200'){
+                console.info("恭喜您，出价成功:" + price);
+            }else if(jqXHR.result=='login'){
+                window.location.href='http://passport.jd.com/new/login.aspx?ReturnUrl='+window.location.href;
+            }else{
+                // {"message":"同一用户连续出价","result":525}
+                // {"message":"拍卖出价频率过快","result":517}
+                console.info("很抱歉，出价失败" + jqXHR.message);
+            };
+        }
+    });
 }
 
 function getRamdomNumber(){
