@@ -69,17 +69,18 @@ function queryCurRemainTime (num, Fun) {
         var remainTime   = objs[0].remainTime
 
         var time = configIntTime(remainTime);
-        console.info("开始时间: "+Date(startTime)+"结束时间: "+Date(endTime))
+        console.info("剩余时间: "+remainTime+"结束时间: "+Date(endTime))
         if (time.minute > 0) {
-            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.minute+"分:"+time.second+"秒")
+            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.minute+"分:"+time.second+"秒"+time.minSecond+"毫秒")
         }else{
-            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.second+"秒")
+            console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.second+"秒"+time.minSecond+"毫秒")
         };
 
         var productInfo = {};
         productInfo.priceCurrent = priceCurrent;
         productInfo.minute       = time.minute;
         productInfo.second       = time.second;
+        productInfo.minSecond    = time.minSecond;
         Fun(productInfo);
     });
 }
@@ -88,9 +89,11 @@ function configIntTime (intTime) {
         var totalSecond = Math.floor(intTime / 1000) 
         var minute = Math.floor(totalSecond / 60) 
         var second = Math.floor(totalSecond % 60) 
+        var minSecond = intTime - totalSecond * 1000;
         var time = {};
         time.minute = minute;
         time.second = second;
+        time.minSecond = minSecond;
         return time;
 }
 
@@ -128,13 +131,17 @@ function queryPriceCurrent(num, auto) {
                     clearTimeout(timer);
                     timer = setTimeout("queryPriceCurrent(num, true)",5000);
                     return;
+                }else if (productInfo.second <= 10 && productInfo.second > 2){
+                    clearTimeout(timer);
+                    timer = setTimeout("queryPriceCurrent(num, true)",1000);
+                    return;
                 }else{
-                    if (productInfo.second < 1) {
-                        bid(num, money)
+                    if (productInfo.second < 1 && productInfo.minSecond < 300) {
+                        bid(num, money);
                         return;
                     };
                     clearTimeout(timer);
-                    timer = setTimeout("queryPriceCurrent(num, true)",500);
+                    timer = setTimeout("queryPriceCurrent(num, true)",200);
                     return;
                 };
             };
