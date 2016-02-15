@@ -136,6 +136,10 @@ function queryPriceCurrent(num, auto) {
                     timer = setTimeout("queryPriceCurrent(num, true)",1000);
                     return;
                 }else{
+                    if (productInfo.second < 0) {
+                        clearTimeout(timer);
+                        return;
+                    }
                     if (productInfo.second < 1 && productInfo.minSecond < 300) {
                         bid(num, money);
                         return;
