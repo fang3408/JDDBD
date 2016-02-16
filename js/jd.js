@@ -140,8 +140,9 @@ function queryPriceCurrent(num, auto) {
                         clearTimeout(timer);
                         return;
                     }
-                    if (productInfo.second < 1) {
+                    if (productInfo.second < 1 && productInfo.minSecond < 400) {
                         bid(num, money);
+                        return;
                     }
                     clearTimeout(timer);
                     timer = setTimeout("queryPriceCurrent(num, true)",200);
