@@ -18,6 +18,8 @@ $('body').prepend(code);
 var num = queryNum();
 // 取商品售价
 var priceSale = queryPriceSale();
+// 准备出价
+var myMoney;
 
 var timer;
 
@@ -113,6 +115,7 @@ function queryPriceCurrent(num, auto) {
             return;
         };
         var money = priceCurrent * 1 + increaseAmount * 1.00
+        myMoney = money
         console.info("准备出价: "+money+"     "+"最大出价: "+max)
 
         if (priceCurrent*1.00 > max*1.00){
@@ -124,7 +127,7 @@ function queryPriceCurrent(num, auto) {
             if (productInfo.minute > 0) {
                 console.info("时间还太早了哦!")
                 clearTimeout(timer);
-                timer = setTimeout("queryPriceCurrent(num, true)",20000);
+                timer = setTimeout("queryPriceCurrent(num, true)",50000);
                 return;
             }else{
                 if (productInfo.second > 10) {
@@ -140,12 +143,14 @@ function queryPriceCurrent(num, auto) {
                         clearTimeout(timer);
                         return;
                     }
-                    if (productInfo.second < 1 && productInfo.minSecond < 360) {
-                        bid(num, money);
+                    if (productInfo.second < 1) {
+                        var waitTime = productInfo.minSecond - 200;
+                        clearTimeout(timer);
+                        timer = setTimeout("bid(num, myMoney)",waitTime);
                         return;
                     }
                     clearTimeout(timer);
-                    timer = setTimeout("queryPriceCurrent(num, true)",200);
+                    timer = setTimeout("queryPriceCurrent(num, true)",500);
                     return;
                 };
             };
