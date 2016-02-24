@@ -144,9 +144,13 @@ function queryPriceCurrent(num, auto) {
                         return;
                     }
                     if (productInfo.second < 1) {
-                        var waitTime = productInfo.minSecond - 200;
                         clearTimeout(timer);
-                        timer = setTimeout("bid(num, myMoney)",waitTime);
+                        var waitTime = productInfo.minSecond - 500;
+                        if (waitTime > 0) {
+                            timer = setTimeout("queryPriceCurrent(num, false)",waitTime);
+                        }else{
+                            queryPriceCurrent(num, false);
+                        }
                         return;
                     }
                     clearTimeout(timer);
