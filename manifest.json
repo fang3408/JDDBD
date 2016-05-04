@@ -6,6 +6,7 @@
 	"permissions" : [
 		"tabs",
 		"http://paimai.jd.com/*",
+		"http://dbditem.jd.com/*",
 		"http://api.flickr.com/"
 	],
 	"icons" : {
@@ -18,7 +19,7 @@
 	],
 	"content_scripts" : [
 		{
-			"matches" : ["http://paimai.jd.com/*"],
+			"matches" : ["http://paimai.jd.com/*","http://dbitem.jd.com/*","http://dbditem.jd.com/*"],
 			"css" : ["css/jd.css"],
 			"js" : ["js/jquery.min.js", "js/jd.js"]
 		}

@@ -56,22 +56,27 @@ function queryPriceSale(){
     return price
 }
 
-function queryCurRemainTime (num, Fun) {
-    var host = "http://paimai.jd.com"
-    var currentInterface = host + "/services/currentList.action?paimaiIds="+num+"&callback=showData&t=1432893946478&callback=jQuery8717195&_=1432893946480"
-    $.get(currentInterface, function (data) {
-        var start = data.indexOf('[')
-        var end   = data.lastIndexOf(']') + 1
-        data = data.substring(start, end)
+http://dbitem.jd.com/json/current/englishquery?paimaiId=11886385&skuId=0&t=211184&start=0&end=9
 
-        var objs = $.parseJSON(data)
-        var priceCurrent = objs[0].currentPrice
-        var startTime    = objs[0].startTime
-        var endTime      = objs[0].endTime
-        var remainTime   = objs[0].remainTime
+function queryCurRemainTime (num, Fun) {
+    // var host = "http://paimai.jd.com"
+    // var currentInterface = host + "/services/currentList.action?paimaiIds="+num+"&callback=showData&t=1432893946478&callback=jQuery8717195&_=1432893946480"
+    var host = "http://dbditem.jd.com"    
+    var currentInterface = host + "/json/current/englishquery?paimaiId="+num+"&skuId=0&t=211184&start=0&end=9"
+    $.get(currentInterface, function (data) {
+        // var start = data.indexOf('[')
+        // var end   = data.lastIndexOf(']') + 1
+        // data = data.substring(start, end)
+
+        // var objs = $.parseJSON(data)
+        // var priceCurrent = objs[0].currentPrice
+        // var remainTime   = objs[0].remainTime
+
+        var priceCurrent = data["currentPrice"]
+        var remainTime   = data["remainTime"]
 
         var time = configIntTime(remainTime);
-        console.info("剩余时间: "+remainTime+"结束时间: "+Date(endTime))
+        console.info("剩余时间: "+remainTime)
         if (time.minute > 0) {
             console.info("商品当前报价："+priceCurrent+"     "+"剩余时间: "+time.minute+"分:"+time.second+"秒"+time.minSecond+"毫秒")
         }else{
@@ -80,6 +85,7 @@ function queryCurRemainTime (num, Fun) {
 
         var productInfo = {};
         productInfo.priceCurrent = priceCurrent;
+        productInfo.remainTime   = remainTime;
         productInfo.minute       = time.minute;
         productInfo.second       = time.second;
         productInfo.minSecond    = time.minSecond;
@@ -88,6 +94,13 @@ function queryCurRemainTime (num, Fun) {
 }
 
 function configIntTime (intTime) {
+        if (intTime < 0){
+            var time = {}
+            time.minute = -1
+            time.second = -1
+            time.minSecond = -1
+            return time
+        }
         var totalSecond = Math.floor(intTime / 1000) 
         var minute = Math.floor(totalSecond / 60) 
         var second = Math.floor(totalSecond % 60) 
@@ -136,22 +149,28 @@ function queryPriceCurrent(num, auto) {
                     return;
                 }else if (productInfo.second <= 10 && productInfo.second > 2){
                     clearTimeout(timer);
-                    timer = setTimeout("queryPriceCurrent(num, true)",1000);
-                    return;
-                }else{
-                    if (productInfo.second < 0) {
-                        clearTimeout(timer);
-                        return;
-                    }
-                    if (productInfo.second < 1) {
-                        var waitTime = productInfo.minSecond - 200;
-                        clearTimeout(timer);
-                        timer = setTimeout("bid(num, myMoney)",waitTime);
-                        return;
-                    }
-                    clearTimeout(timer);
                     timer = setTimeout("queryPriceCurrent(num, true)",500);
                     return;
+                }else{
+                    // if (productInfo.second < 0) {
+                    //     clearTimeout(timer);
+                    //     timer = setTimeout("queryPriceCurrent(num, false)",500);
+                    //     return;
+                    // }
+                    // if (productInfo.second < 1) {
+                        clearTimeout(timer);
+                        var waitTime = productInfo.remainTime - 1750;
+                        console.info("小于3秒remainTime:"+productInfo.remainTime+"----------waitTime:"+waitTime)
+                        if (waitTime > 0) {
+                            timer = setTimeout("queryPriceCurrent(num, false)",waitTime);
+                        }else{
+                            queryPriceCurrent(num, false);
+                        }
+                        return;
+                    // }
+                    // clearTimeout(timer);
+                    // timer = setTimeout("queryPriceCurrent(num, true)",300);
+                    // return;
                 };
             };
 
@@ -162,9 +181,10 @@ function queryPriceCurrent(num, auto) {
     });   
 }
 
+// http://dbditem.jd.com/services/bid.action?t=511152&paimaiId=11979774&price=1170&proxyFlag=0&bidSource=0
 function bid(paimaiId, price) {
     
-    var url = "/services/bid.action?t=" + getRamdomNumber();
+    var url = "http://dbditem.jd.com/services/bid.action?t=" + getRamdomNumber();
     var data = {paimaiId:paimaiId,price:price,proxyFlag:0,bidSource:0};
     jQuery.getJSON(url,data,function(jqXHR){
         if(jqXHR!=undefined){
