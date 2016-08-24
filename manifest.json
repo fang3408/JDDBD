@@ -1,6 +1,6 @@
 {
 	"manifest_version" : 2,
-	"name" : "XDBB京东抢拍",
+	"name" : "XD京东抢拍",
 	"description" : "京东夺宝岛抢拍",
 	"version" : "0.2",
 	"permissions" : [
@@ -10,9 +10,9 @@
 		"http://api.flickr.com/"
 	],
 	"icons" : {
-		"16":"imgs/Z16.png", 
-		"48":"imgs/Z48.png", 
-		"128":"imgs/Z128.png"
+		"16":"imgs/db16.png", 
+		"48":"imgs/db48.png", 
+		"128":"imgs/db128.png"
 	},
 	"web_accessible_resources" : [
 		"js/jquery.min.js", "js/jd.js"
@@ -25,7 +25,7 @@
 		}
 	],
 	"browser_action" : {
-		"default_icon" : "imgs/Z128.png",
+		"default_icon" : "imgs/db128.png",
 		"default_title" : "京东夺宝岛扛把子",
 		"popup" : "popup.html"
 	}

@@ -1,5 +1,5 @@
 
-var aboutme = "***京东夺宝岛抢拍-V 1.0-小逗粑粑***\n"
+var aboutme = "***京东夺宝岛抢拍-V 1.0-HWenJun***\n"
 
 console.log(aboutme);
 console.log("个人主页：http://weibo.com/kongkongss");
@@ -8,6 +8,7 @@ console.log("个人主页：http://weibo.com/kongkongss");
 var code = "<div id='qp_div'>"
         + "最高出价<input type='text' id='qp_max_price' />&nbsp;&nbsp;&nbsp;&nbsp;"
         + "递增金额<input type='text' id='qp_inc_amount' />&nbsp;&nbsp;&nbsp;&nbsp;"
+        + "延迟时间<input type='text' id='qp_inc_wait' />&nbsp;&nbsp;&nbsp;&nbsp;"
         + "<input type='button' value='后台抢拍' id='qp_btn_begin' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
         + "<input type='button' value='手动抢拍' id='qp_btn_manual' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
         + "<input type='button' value='剩余时间' id='qp_btn_remain' class='qp_btn'/>&nbsp;&nbsp;&nbsp;&nbsp;"
@@ -15,7 +16,7 @@ var code = "<div id='qp_div'>"
 $('body').prepend(code);
 
 // 取商品拍卖编号
-var num = queryNum();
+var num       = queryNum();
 // 取商品售价
 var priceSale = queryPriceSale();
 // 准备出价
@@ -158,8 +159,12 @@ function queryPriceCurrent(num, auto) {
                     //     return;
                     // }
                     // if (productInfo.second < 1) {
+                        var interval = $('#qp_inc_wait').val()
+                        if (increaseAmount == null || increaseAmount == '' || increaseAmount == undefined) {
+                               increaseAmount = 1800;
+                         };  
                         clearTimeout(timer);
-                        var waitTime = productInfo.remainTime - 1750;
+                        var waitTime = productInfo.remainTime - increaseAmount;
                         console.info("小于3秒remainTime:"+productInfo.remainTime+"----------waitTime:"+waitTime)
                         if (waitTime > 0) {
                             timer = setTimeout("queryPriceCurrent(num, false)",waitTime);
